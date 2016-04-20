@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+from="you@you.com"
+
+command_input(){
+case $1 in
+
+e)
+vim .mde_md
+main_menu
+;;
+
+v)
+pandoc .mde_md -o .mde_html
+view .mde_html
+main_menu
+;;
+
+t)
+echo to
+vim .mde_to
+main_menu
+;;
+
+s)
+echo subject
+vim .mde_subject
+main_menu
+;;
+
+y)
+pandoc .mde_md -o .mde_html
+(echo -e "Subject: $(cat .mde_subject)\nMIME-Version: 1.0\nFrom: $from\nTo:$(cat .mde_to | sed 's/ //g')\nContent-Type: text/html\nContent-Disposition: inline\n\n";/bin/cat .mde_html) | /usr/sbin/sendmail -f  $from $(cat .mde_to | sed 's/ //g')
+;;
+
+q)
+rm .mde_*
+exit 0
+;;
+
+r|*)
+main_menu;;
+
+esac
+}
+
+main_menu(){
+clear
+menu_bar="e: edit markdown | v: view html | t: change to | s: subject | y: send | r: redraw | q: quit"
+width=$(tput cols)
+menu_lines=$((92 / $width))
+md_lines=$(wc -l .mde_md | awk '{print $1}')
+term_lines=$(tput lines)
+lines_to_push=$(($term_lines - $md_lines - $menu_lines - 2))
+echo $menu_bar
+touch .mde_md
+cat .mde_md
+for i in $(seq $lines_to_push) ; do
+  echo
+done
+read -p ": " -n1 command
+command_input $command
+}
+
+main_menu
